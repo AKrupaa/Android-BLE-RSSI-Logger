@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">BLE_RSSI_Plotter</string>
+    <string name="BLE_is_not_supported">BLE is not supported</string>
+    <string name="BLE_is_supported">BLE is supported!</string>
+</resources>
