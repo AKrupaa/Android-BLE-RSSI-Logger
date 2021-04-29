@@ -6,16 +6,78 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/start_scanning_ble"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/start_scaning_ble"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/dump_to_file"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/dump_to_file"
+        android:textSize="20sp"
+        app:layout_constraintHorizontal_bias="0.086"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="@id/start_scanning_ble"
+        app:layout_constraintTop_toBottomOf="@id/start_scanning_ble" />
+
+
+    <EditText
+        android:id="@+id/file_name"
+        android:layout_width="234dp"
+        android:layout_height="48dp"
+        android:layout_marginLeft="8dp"
+        android:hint="@string/insert_file_name"
+        app:layout_constraintLeft_toRightOf="@id/dump_to_file"
+        app:layout_constraintTop_toBottomOf="@id/start_scanning_ble" />
+
+
+    <TextView
+        android:id="@+id/how_long_dumping"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/how_long"
+        android:textSize="20sp"
+        app:layout_constraintHorizontal_bias="0.47"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="@id/dump_to_file"
+        app:layout_constraintTop_toBottomOf="@+id/dump_to_file" />
+
+    <EditText
+        android:id="@+id/time_of_dumping"
+        android:layout_width="234dp"
+        android:layout_height="48dp"
+        android:hint="@string/time_of_dumping_s"
+        android:inputType="numberDecimal"
+        app:layout_constraintLeft_toLeftOf="@id/file_name"
+        app:layout_constraintTop_toTopOf="@id/how_long_dumping" />
+
+    <Button
+        android:id="@+id/start_dumping_to_file"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:text="@string/start_dumping_to_file"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/how_long_dumping" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/ble_rv"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="100dp"
+        android:layout_height="360dp"
         android:textAppearance="?attr/textAppearanceListItem"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/start_dumping_to_file"
         tools:listitem="@layout/recycler_view_row_ble" />
     <!--    i ten tools:listitem="@layout/recycler_view_row_ble"/
             to opis jak wyglada caly recycle view

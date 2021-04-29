@@ -2,4 +2,10 @@
     <string name="app_name">BLE_RSSI_Plotter</string>
     <string name="BLE_is_not_supported">BLE is not supported</string>
     <string name="BLE_is_supported">BLE is supported!</string>
+    <string name="start_scaning_ble">Start scaning BLE</string>
+    <string name="dump_to_file">Dump to file:</string>
+    <string name="insert_file_name">insert file name</string>
+    <string name="how_long">How long?</string>
+    <string name="time_of_dumping_s">Time of dumping [s]</string>
+    <string name="start_dumping_to_file">Start dumping to file...</string>
 </resources>
