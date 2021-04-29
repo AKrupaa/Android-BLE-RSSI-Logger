@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -20,11 +21,13 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.ble_rssi_plotter.Adapter.RecycleViewBLEAdapter;
+import com.opencsv.CSVWriter;
 import com.polidea.rxandroidble2.RxBleClient;
 import com.polidea.rxandroidble2.scan.ScanFilter;
 import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.scan.ScanSettings;
 
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,15 +76,49 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.start_dumping_to_file)
     Button dumpToFileButton;
 
+    Runnable runnable;
+    Thread thread;
+
     @OnClick(R.id.start_dumping_to_file)
     public void onStartDumpingToFileClick() {
-        ;
+
+        runnable = new SimpleThread(String.valueOf(timeOfDumpingEditText.getText()), rxBleClient, new SimpleThread.AnnounceFromThread() {
+            @Override
+            public void onEnd(String value) {
+//                .setAnnounceFromThread(value -> {
+//            Toast.makeText(getApplicationContext(), value, Toast.LENGTH_SHORT).show();
+                    Log.i("INTERFEJS", "INTERFEJS");
+//                });
+            }
+        });
+        thread = new Thread(runnable);
+        if (isScanning())
+            scanDisposable.dispose();
+        thread.start();
+
+        try {
+            thread.join();
+//            Toast.makeText(this, "JOIN", Toast.LENGTH_SHORT).show();
+        } catch (InterruptedException ie) {
+            Log.i("InterruptException", Arrays.toString(ie.getStackTrace()));
+        } finally {
+            Toast.makeText(this, "Zapisano do pliku", Toast.LENGTH_SHORT).show();
+        }
+
+
+//        CSV
+//        CSVWriter writer = new CSVWriter(new FileWriter("yourfile.csv"), '\t');
+
+
+//        Toast.makeText(this, "Poczekaj grzecznie", Toast.LENGTH_SHORT).show();
     }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+//        this.thre
 
 //            onSaveInstanceState()
         if (savedInstanceState == null) {
