@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -58,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
     RecycleViewBLEAdapter recycleViewBLEAdapter;
     // array for csv
     ArrayList<ScanResult> scanResultsCSV;
+    // array devices of interest
+    ArrayList<ScanResult> deviceOfInterest;
 
     @BindView(R.id.file_directory_tv)
     TextView fileDirectoryTextView;
@@ -133,12 +136,11 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Nalezy tam wpisac liczbe...", Toast.LENGTH_SHORT).show();
             toggleScanBleButton.setEnabled(true);
             dumpToFileButton.setEnabled(true);
-        } catch(IOException ioException) {
+        } catch (IOException ioException) {
             toggleScanBleButton.setEnabled(true);
             dumpToFileButton.setEnabled(true);
             Toast.makeText(this, ioException.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             toggleScanBleButton.setEnabled(true);
             dumpToFileButton.setEnabled(true);
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -197,6 +199,9 @@ public class MainActivity extends AppCompatActivity {
 //        for sake of practise
         unbinder = ButterKnife.bind(this);
 
+//        init devices of interest
+        deviceOfInterest = new ArrayList<ScanResult>(0);
+
         File pathfile = new File(this.getExternalFilesDir(null).getAbsolutePath() + "/csvData");
         fileDirectoryTextView.setText("File directory:");
         pathToFileTextView.setText(pathfile.getPath());
@@ -230,7 +235,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onAdapterItemClick(View view, int position, ScanResult scanResult) {
-        Toast.makeText(this, "Nie klikaj, bo wybuchnie!", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "Nie klikaj, bo wybuchnie!", Toast.LENGTH_SHORT).show();
+
+        List<ScanResult> toBeDeleted = this.deviceOfInterest
+                .stream()
+                .filter(item -> item.getBleDevice().getMacAddress().equals(scanResult.getBleDevice().getMacAddress()))
+                .collect(Collectors.toList());
+
+        if (!toBeDeleted.isEmpty()) {
+            toBeDeleted.forEach(item -> {
+                Toast.makeText(this, "No longer listening to " + item.getBleDevice().getMacAddress(), Toast.LENGTH_SHORT).show();
+                this.deviceOfInterest.remove(item);
+            });
+        } else {
+            this.deviceOfInterest.add(scanResult);
+            Toast.makeText(this, "Listening to " + scanResult.getBleDevice().getMacAddress(), Toast.LENGTH_SHORT).show();
+        }
     }
 
 
@@ -329,7 +349,7 @@ public class MainActivity extends AppCompatActivity {
                                         }
                                         CSVWriter writer = new CSVWriter(new FileWriter(file));
 //                                        CSVWriter writer = new CSVWriter(new FileWriter(pathfile + File.separator + filename + ".csv"));
-                                        String[] columns = String.format("%s,%s,%s%s", "timestamp", "MAC", "Device name", "RSSI").split(",");
+                                        String[] columns = String.format("%s,%s,%s,%s", "timestamp", "MAC", "Device name", "RSSI").split(",");
                                         writer.writeNext(columns);
                                         scanResultsCSV.forEach(scan -> {
                                             String[] entries = String.format("%d,%s,%s,%d", scan.getTimestampNanos(), scan.getBleDevice().getMacAddress(), scan.getBleDevice().getName(), scan.getRssi()).split(",");
