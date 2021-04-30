@@ -18,6 +18,7 @@
         android:required="true" />
 
     <application
+        android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true"
         android:name="com.example.ble_rssi_plotter.SampleApplication"
         android:allowBackup="true"

@@ -277,10 +277,18 @@ public class MainActivity extends AppCompatActivity {
                                         // You can use the API that requires the permission.
 //                                        performAction(...);
 
-                                        File pathfile = new File(Environment.getExternalStorageDirectory()
-                                                .getAbsolutePath()
-                                                + File.separator
-                                                + "csvData");
+                                        File pathfile = new File(this.getExternalFilesDir(null).getAbsolutePath() + "/csvData");
+//                                        directory.mkdirs();
+
+//                                        File pathfile = new File(Environment.getExternalStorageDirectory()
+//                                                .getAbsolutePath()
+//                                                + File.separator
+//                                                + "csvData");
+//                                        boolean directory = pathfile.isDirectory();
+//                                        if (!directory) {
+//                                            return;
+//                                        }
+
                                         if (!pathfile.isDirectory()) {
 //                                            ~~~~~~~~~~~~~~~~~~IS NOT CREATING A DIRECTORY~~~~~~~~~~~~~~~~~~
                                             pathfile.mkdir();
