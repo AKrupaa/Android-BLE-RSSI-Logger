@@ -3,6 +3,7 @@ package com.example.ble_rssi_plotter;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -12,6 +13,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -19,11 +21,17 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.ble_rssi_plotter.Adapter.RecycleViewBLEAdapter;
+import com.opencsv.CSVWriter;
 import com.polidea.rxandroidble2.RxBleClient;
 import com.polidea.rxandroidble2.scan.ScanFilter;
 import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.scan.ScanSettings;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,6 +44,7 @@ import io.reactivex.disposables.Disposable;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final Integer PERMISSION_WRITE_IDENTIFIER = 11;
     // contains rxBleClient
     private RxBleClient rxBleClient;
     // for ButterKnife
@@ -70,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     EditText filenameEditText;
 
     @BindView(R.id.required_dumping_rows)
-    EditText timeOfDumpingEditText;
+    EditText requiredDumpingRows;
 
     @BindView(R.id.start_dumping_to_file)
     Button dumpToFileButton;
@@ -82,26 +91,33 @@ public class MainActivity extends AppCompatActivity {
     public void onStartDumpingToFileClick() {
 
 //        dummyCodeWithThread();
+        try {
+            if (isScanning()) {
+                scanDisposable.dispose();
+            }
+            updateButtonUIState();
+            toggleScanBleButton.setEnabled(false);
+            dumpToFileButton.setEnabled(false);
 
-        if (isScanning()) {
-            scanDisposable.dispose();
+            this.scanResultsCSV = new ArrayList<ScanResult>(0);
+
+            int requiredRows = Integer.parseInt(String.valueOf(requiredDumpingRows.getText()));
+            String filename = String.valueOf(filenameEditText.getText());
+//            Log.i("FILENAME", filename);
+            scanBleDevicesDelay(requiredRows, filename);
+        } catch (NumberFormatException nfe) {
+            Toast.makeText(this, "Nalezy tam wpisac liczbe...", Toast.LENGTH_SHORT).show();
+            toggleScanBleButton.setEnabled(true);
+            dumpToFileButton.setEnabled(true);
+        } catch (Exception e) {
+            toggleScanBleButton.setEnabled(true);
+            dumpToFileButton.setEnabled(true);
         }
-        updateButtonUIState();
-        toggleScanBleButton.setEnabled(false);
-        dumpToFileButton.setEnabled(false);
-        
-        this.scanResultsCSV = new ArrayList<ScanResult>(0);
-
-//        CSV
-//        CSVWriter writer = new CSVWriter(new FileWriter("yourfile.csv"), '\t');
-
-
-//        Toast.makeText(this, "Poczekaj grzecznie", Toast.LENGTH_SHORT).show();
     }
 
     private void dummyCodeWithThread() {
         ArrayList<ScanResult> returnedResults;
-        runnable = new SimpleThread(String.valueOf(timeOfDumpingEditText.getText()), rxBleClient, new SimpleThread.AnnounceFromThread() {
+        runnable = new SimpleThread(String.valueOf(requiredDumpingRows.getText()), rxBleClient, new SimpleThread.AnnounceFromThread() {
             @Override
             public void onEnd(ArrayList<ScanResult> scanResults) {
 //                returnedResults = scanResults;
@@ -131,7 +147,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//        this.thre
 
 //            onSaveInstanceState()
         if (savedInstanceState == null) {
@@ -232,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
                 );
     }
 
-    private void scanBleDevicesDelay() {
+    private void scanBleDevicesDelay(int howManyRows, String filename) {
         scanDisposable = rxBleClient.scanBleDevices(
                 new ScanSettings.Builder()
                         .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY) // change if needed
@@ -240,16 +255,85 @@ public class MainActivity extends AppCompatActivity {
                         .build(),
                 new ScanFilter.Builder()
                         .build())
-                .doFinally(this::dispose)
+                .doFinally(() -> {
+                    dispose();
+                    toggleScanBleButton.setEnabled(true);
+                    dumpToFileButton.setEnabled(true);
+
+                })
                 .subscribe(
                         scanResult -> {
+//                            I am not proud of this :-(
                             // Process scan result here.
-//                            recycleViewBLEAdapter.addScanResult(scanResult);
-//                            scanDisposable.dispose();
+                            recycleViewBLEAdapter.addScanResult(scanResult);
+                            scanResultsCSV.add(scanResult);
+                            if (scanResultsCSV.size() == howManyRows) {
+//                                CSV file writer
+                                try {
+
+                                    if (ContextCompat.checkSelfPermission(
+                                            getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                                            PackageManager.PERMISSION_GRANTED) {
+                                        // You can use the API that requires the permission.
+//                                        performAction(...);
+
+                                        File pathfile = new File(Environment.getExternalStorageDirectory()
+                                                .getAbsolutePath()
+                                                + File.separator
+                                                + "csvData");
+                                        if (!pathfile.isDirectory()) {
+//                                            ~~~~~~~~~~~~~~~~~~IS NOT CREATING A DIRECTORY~~~~~~~~~~~~~~~~~~
+                                            pathfile.mkdir();
+                                        }
+
+                                        File file = new File(pathfile,
+                                                File.separator + filename + ".csv");
+                                        if (!file.exists()) {
+//                                            ~~~~~~~~~~~~~~~~~~IS NOT CREATING A FILE~~~~~~~~~~~~~~~~~~
+//                                            ~~~~~~~~~~~~~~~~~~HERE THROWS IOException ~~~~~~~~~~~~~~~~~~
+                                            file.createNewFile();
+//                                            Files.createFile(file.toPath());
+                                            Log.i("File created: ", file.getName());
+                                        }
+                                        CSVWriter writer = new CSVWriter(new FileWriter(file));
+//                                        CSVWriter writer = new CSVWriter(new FileWriter(pathfile + File.separator + filename + ".csv"));
+
+                                        scanResultsCSV.forEach(scan -> {
+                                            String[] entries = String.format("%s,%s,%s", scan.getTimestampNanos(), scan.getBleDevice(), scan.getRssi()).split(",");
+                                            Log.i("Entries", Arrays.toString(entries));
+                                            writer.writeNext(entries);
+                                        });
+                                        writer.close();
+                                        Toast.makeText(this, "Zapisano do pliku", Toast.LENGTH_SHORT).show();
+                                    } else if (shouldShowRequestPermissionRationale("Failed")) {
+                                        // In an educational UI, explain to the user why your app requires this
+                                        // permission for a specific feature to behave as expected. In this UI,
+                                        // include a "cancel" or "no thanks" button that allows the user to
+                                        // continue using your app without granting the permission.
+//                                        showInContextUI(...);
+                                        Toast.makeText(this, "Nie przyznano dostępu", Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        // request a permission
+                                        ActivityCompat.requestPermissions(this, new String[]{
+                                                Manifest.permission.WRITE_EXTERNAL_STORAGE}, 3);
+                                    }
+
+                                } catch (IOException ioException) {
+                                    ioException.printStackTrace();
+                                    Toast.makeText(this, "Plik istnieje!", Toast.LENGTH_SHORT).show();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    Toast.makeText(this, "Nieoczekiwany blad", Toast.LENGTH_SHORT).show();
+                                } finally {
+//                                    Toast.makeText(this, "Zakonczono procedure", Toast.LENGTH_SHORT).show();
+                                    scanDisposable.dispose();
+                                }
+                            }
                         },
                         throwable -> {
                             // Handle an error here.
                             Log.e("BLE search error", Arrays.toString(throwable.getStackTrace()));
+                            Toast.makeText(this, "Nieoczekiwany blad", Toast.LENGTH_SHORT).show();
                         }
                 );
     }
@@ -261,6 +345,10 @@ public class MainActivity extends AppCompatActivity {
         } else {
             checkPermission();
         }
+
+//        ActivityCompat.requestPermissions(this,
+//                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+//                PERMISSION_WRITE_IDENTIFIER);
     }
 
     @Override
