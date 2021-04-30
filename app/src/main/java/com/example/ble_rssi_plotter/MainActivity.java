@@ -61,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<ScanResult> scanResultsCSV;
     // array devices of interest
     ArrayList<ScanResult> deviceOfInterest;
+    // array that manage amount of subscribers
+    ArrayList<Integer> subscribers;
 
     @BindView(R.id.file_directory_tv)
     TextView fileDirectoryTextView;
@@ -82,6 +84,14 @@ public class MainActivity extends AppCompatActivity {
             scanBleDevices();
         }
         updateButtonUIState();
+    }
+
+    @BindView(R.id.restart)
+    Button restartButton;
+
+    @OnClick(R.id.restart)
+    public void onRestartButtonClick() {
+        this.deviceOfInterest.clear();
     }
 
     @BindView(R.id.file_name)
@@ -113,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (filename.length() < 2) {
 //                Toast.makeText(this, "Wprowadz nazwe pliku", Toast.LENGTH_SHORT).show();
-                throw new Exception("Wprowadz nazwe pliku...");
+                throw new Exception("Wprowadz dluzsza nazwe pliku...");
             }
 
             File pathfile = new File(this.getExternalFilesDir(null).getAbsolutePath() + "/csvData");
@@ -131,6 +141,13 @@ public class MainActivity extends AppCompatActivity {
 
             toggleScanBleButton.setEnabled(false);
             dumpToFileButton.setEnabled(false);
+
+            subscribers = new ArrayList<Integer>(0);
+
+            deviceOfInterest.forEach(item -> {
+                subscribers.add(0);
+            });
+
             scanBleDevicesDelay(requiredRows, filename);
         } catch (NumberFormatException nfe) {
             Toast.makeText(this, "Nalezy tam wpisac liczbe...", Toast.LENGTH_SHORT).show();
@@ -319,11 +336,47 @@ public class MainActivity extends AppCompatActivity {
                         scanResult -> {
 //                            I am not proud of this :-(
                             // Process scan result here.
-                            recycleViewBLEAdapter.addScanResult(scanResult);
-                            scanResultsCSV.add(scanResult);
-                            if (scanResultsCSV.size() == howManyRows) {
+                            try {
+                                recycleViewBLEAdapter.addScanResult(scanResult);
+
+                                if (deviceOfInterest.isEmpty()) {
+                                    throw new Exception("Subscribe to the device first!");
+                                }
+
+//                                ArrayList<Integer> subscribers = new ArrayList<Integer>(deviceOfInterest.size());
+
+
+//                                deviceOfInterest.stream()
+//                                        .anyMatch(item -> scanResult.getBleDevice().getMacAddress().equals(item.getBleDevice().getMacAddress()));
+//                                        .forEach(item -> {
+//                                            if ( scanResult.getBleDevice().getMacAddress().equals(item.getBleDevice().getMacAddress())) {
+//                                            }
+//                                        });
+
+                                for (int i = 0; i < deviceOfInterest.size(); i++) {
+                                    if (deviceOfInterest.get(i).getBleDevice().getMacAddress().equals(scanResult.getBleDevice().getMacAddress())) {
+                                        int counter = subscribers.get(i);
+
+                                        if (counter != howManyRows) {
+                                            subscribers.set(i, counter + 1);
+                                            scanResultsCSV.add(scanResult);
+                                        }
+                                    }
+                                }
+//                                if (b) {
+//                                    scanResultsCSV.add(scanResult);
+//                                }
+                                boolean pass = false;
+
+                                List<Integer> collect = subscribers.stream()
+                                        .filter(integer -> {
+                                            return integer == howManyRows;
+                                        }).collect(Collectors.toList());
+
+
+                                if (collect.size() == subscribers.size()) {
 //                                CSV file writer
-                                try {
+
 
                                     if (ContextCompat.checkSelfPermission(
                                             getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
@@ -371,16 +424,18 @@ public class MainActivity extends AppCompatActivity {
                                                 Manifest.permission.WRITE_EXTERNAL_STORAGE}, 3);
                                     }
 
-                                } catch (IOException ioException) {
-                                    ioException.printStackTrace();
-                                    Toast.makeText(this, "Plik istnieje!", Toast.LENGTH_SHORT).show();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                    Toast.makeText(this, "Nieoczekiwany blad", Toast.LENGTH_SHORT).show();
-                                } finally {
-//                                    Toast.makeText(this, "Zakonczono procedure", Toast.LENGTH_SHORT).show();
                                     scanDisposable.dispose();
+
+
                                 }
+                            } catch (IOException ioException) {
+                                ioException.printStackTrace();
+                                Toast.makeText(this, "Plik istnieje!", Toast.LENGTH_SHORT).show();
+                                scanDisposable.dispose();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                scanDisposable.dispose();
                             }
                         },
                         throwable -> {

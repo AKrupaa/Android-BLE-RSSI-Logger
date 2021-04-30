@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+
     <Button
         android:id="@+id/toggle_scan_ble_button"
         android:layout_width="wrap_content"
@@ -13,9 +14,19 @@
         android:layout_marginTop="4dp"
         android:text="@string/start_scaning_ble"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.044"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <Button
+        android:id="@+id/restart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/restart"
+        app:layout_constraintHorizontal_bias="0.863"
+        app:layout_constraintLeft_toRightOf="@id/toggle_scan_ble_button"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="@id/toggle_scan_ble_button" />
 
     <TextView
         android:id="@+id/dump_to_file"
@@ -33,7 +44,7 @@
         android:id="@+id/file_name"
         android:layout_width="234dp"
         android:layout_height="48dp"
-        android:layout_marginLeft="32dp"
+        android:layout_marginLeft="40dp"
         android:hint="@string/insert_file_name"
         app:layout_constraintLeft_toRightOf="@id/dump_to_file"
         app:layout_constraintTop_toBottomOf="@id/toggle_scan_ble_button" />
