@@ -4,39 +4,38 @@ import android.util.Log;
 
 import com.polidea.rxandroidble2.RxBleClient;
 import com.polidea.rxandroidble2.scan.ScanFilter;
+import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.scan.ScanSettings;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import io.reactivex.disposables.Disposable;
 
 
 public class SimpleThread implements Runnable {
-
-    private AnnounceFromThread announceFromThread;
-    private String timeOfDumpingEditText;
+    private final AnnounceFromThread announceFromThread;
+    private final String quantityDumpingRowsEditText;
     Disposable scanDisposable;
     RxBleClient rxBleClient;
+    ArrayList<ScanResult> resultArrayList = new ArrayList<ScanResult>(0);
 
-    public SimpleThread(String timeOfDumpingEditText, RxBleClient rxBleClient, AnnounceFromThread announceFromThread) {
-        this.timeOfDumpingEditText = timeOfDumpingEditText;
+    public SimpleThread(String quantityDumpingRowsEditText, RxBleClient rxBleClient, AnnounceFromThread announceFromThread) {
+        this.quantityDumpingRowsEditText = quantityDumpingRowsEditText;
         this.rxBleClient = rxBleClient;
         this.announceFromThread = announceFromThread;
     }
 
     @Override
     public void run() {
-        Integer time = 0;
+//        Integer quantity = 0;
         try {
-            time = Integer.parseInt(timeOfDumpingEditText);
-            time = time * 1000; // [ms]
+            int quantity = Integer.parseInt(quantityDumpingRowsEditText);
+//            time = time * 1000; // [ms]
             scanBleDevices();
-            while (time > 0) {
-//                    sleep(1000);
-//                    handler.post(this);
-//                Toast.makeText(this, "some", )
-                Log.i("THREAD", "DZIALA I WYPISUJE");
-                time -= 1;
+            while (resultArrayList.size() < quantity) {
+//                Log.i("THREAD", "DZIALA I WYPISUJE");
+//                time -= 1;
             }
 //            announceFromThread.onEnd("Ukonczono!");
         } catch (NumberFormatException nfe) {
@@ -45,7 +44,8 @@ public class SimpleThread implements Runnable {
             Log.e("ILLEGAL THREAD", Arrays.toString(itse.getStackTrace()));
         } finally {
             scanDisposable.dispose();
-            announceFromThread.onEnd("Ukonczono!");
+            announceFromThread.onEnd(resultArrayList);
+//            announceFromThread.onEnd("Ukonczono!");
         }
     }
 
@@ -62,6 +62,7 @@ public class SimpleThread implements Runnable {
                         scanResult -> {
                             // Process scan result here.
                             Log.i("Scan Result", scanResult.toString());
+                            resultArrayList.add(scanResult);
 //                            recycleViewBLEAdapter.addScanResult(scanResult);
                         },
                         throwable -> {
@@ -80,7 +81,7 @@ public class SimpleThread implements Runnable {
     }
 
     public interface AnnounceFromThread {
-        void onEnd(String value);
+        void onEnd(ArrayList<ScanResult> scanResults);
     }
 
 //    public void setAnnounceFromThread(AnnounceFromThread announceFromThread) {

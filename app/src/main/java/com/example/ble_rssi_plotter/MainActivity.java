@@ -8,12 +8,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -21,13 +19,11 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.ble_rssi_plotter.Adapter.RecycleViewBLEAdapter;
-import com.opencsv.CSVWriter;
 import com.polidea.rxandroidble2.RxBleClient;
 import com.polidea.rxandroidble2.scan.ScanFilter;
 import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.scan.ScanSettings;
 
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -50,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
     private Disposable scanDisposable;
     // recycle viewer adapter
     RecycleViewBLEAdapter recycleViewBLEAdapter;
+    // array for csv
+    ArrayList<ScanResult> scanResultsCSV;
+
 
     @BindView(R.id.ble_rv)
     RecyclerView recyclerView;
@@ -70,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.file_name)
     EditText filenameEditText;
 
-    @BindView(R.id.time_of_dumping)
+    @BindView(R.id.required_dumping_rows)
     EditText timeOfDumpingEditText;
 
     @BindView(R.id.start_dumping_to_file)
@@ -82,35 +81,49 @@ public class MainActivity extends AppCompatActivity {
     @OnClick(R.id.start_dumping_to_file)
     public void onStartDumpingToFileClick() {
 
-        runnable = new SimpleThread(String.valueOf(timeOfDumpingEditText.getText()), rxBleClient, new SimpleThread.AnnounceFromThread() {
-            @Override
-            public void onEnd(String value) {
-//                .setAnnounceFromThread(value -> {
-//            Toast.makeText(getApplicationContext(), value, Toast.LENGTH_SHORT).show();
-                    Log.i("INTERFEJS", "INTERFEJS");
-//                });
-            }
-        });
-        thread = new Thread(runnable);
-        if (isScanning())
+//        dummyCodeWithThread();
+
+        if (isScanning()) {
             scanDisposable.dispose();
-        thread.start();
-
-        try {
-            thread.join();
-//            Toast.makeText(this, "JOIN", Toast.LENGTH_SHORT).show();
-        } catch (InterruptedException ie) {
-            Log.i("InterruptException", Arrays.toString(ie.getStackTrace()));
-        } finally {
-            Toast.makeText(this, "Zapisano do pliku", Toast.LENGTH_SHORT).show();
         }
-
+        updateButtonUIState();
+        toggleScanBleButton.setEnabled(false);
+        dumpToFileButton.setEnabled(false);
+        
+        this.scanResultsCSV = new ArrayList<ScanResult>(0);
 
 //        CSV
 //        CSVWriter writer = new CSVWriter(new FileWriter("yourfile.csv"), '\t');
 
 
 //        Toast.makeText(this, "Poczekaj grzecznie", Toast.LENGTH_SHORT).show();
+    }
+
+    private void dummyCodeWithThread() {
+        ArrayList<ScanResult> returnedResults;
+        runnable = new SimpleThread(String.valueOf(timeOfDumpingEditText.getText()), rxBleClient, new SimpleThread.AnnounceFromThread() {
+            @Override
+            public void onEnd(ArrayList<ScanResult> scanResults) {
+//                returnedResults = scanResults;
+            }
+        });
+        thread = new Thread(runnable);
+//        turn off
+        if (isScanning())
+            scanDisposable.dispose();
+        updateButtonUIState();
+        toggleScanBleButton.setEnabled(false);
+        dumpToFileButton.setEnabled(false);
+        thread.start();
+
+        try {
+            thread.join();
+        } catch (InterruptedException ie) {
+            Log.i("InterruptException", Arrays.toString(ie.getStackTrace()));
+        } finally {
+            toggleScanBleButton.setEnabled(true);
+            dumpToFileButton.setEnabled(true);
+        }
     }
 
 
@@ -211,6 +224,28 @@ public class MainActivity extends AppCompatActivity {
                         scanResult -> {
                             // Process scan result here.
                             recycleViewBLEAdapter.addScanResult(scanResult);
+                        },
+                        throwable -> {
+                            // Handle an error here.
+                            Log.e("BLE search error", Arrays.toString(throwable.getStackTrace()));
+                        }
+                );
+    }
+
+    private void scanBleDevicesDelay() {
+        scanDisposable = rxBleClient.scanBleDevices(
+                new ScanSettings.Builder()
+                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY) // change if needed
+                        .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES) // change if needed
+                        .build(),
+                new ScanFilter.Builder()
+                        .build())
+                .doFinally(this::dispose)
+                .subscribe(
+                        scanResult -> {
+                            // Process scan result here.
+//                            recycleViewBLEAdapter.addScanResult(scanResult);
+//                            scanDisposable.dispose();
                         },
                         throwable -> {
                             // Handle an error here.

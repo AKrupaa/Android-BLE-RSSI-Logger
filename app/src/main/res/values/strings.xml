@@ -10,4 +10,5 @@
     <string name="start_dumping_to_file">Start dumping to file...</string>
     <string name="stop_scan">Stop scan</string>
     <string name="find_devices">Find devices</string>
+    <string name="insert_required_rows">Insert required rows</string>
 </resources>
