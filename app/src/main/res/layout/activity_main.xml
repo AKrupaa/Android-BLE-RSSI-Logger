@@ -16,11 +16,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+
     <TextView
         android:id="@+id/dump_to_file"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="20dp"
         android:text="@string/dump_to_file"
         android:textSize="20sp"
         app:layout_constraintHorizontal_bias="0.086"
@@ -28,37 +29,36 @@
         app:layout_constraintRight_toRightOf="@id/toggle_scan_ble_button"
         app:layout_constraintTop_toBottomOf="@id/toggle_scan_ble_button" />
 
-
     <EditText
         android:id="@+id/file_name"
         android:layout_width="234dp"
         android:layout_height="48dp"
-        android:layout_marginLeft="8dp"
+        android:layout_marginLeft="32dp"
         android:hint="@string/insert_file_name"
         app:layout_constraintLeft_toRightOf="@id/dump_to_file"
         app:layout_constraintTop_toBottomOf="@id/toggle_scan_ble_button" />
-
 
     <TextView
         android:id="@+id/how_many_rows"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
         android:text="How many?"
         android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@id/required_dumping_rows"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="@id/dump_to_file"
-        app:layout_constraintTop_toBottomOf="@+id/dump_to_file" />
+        app:layout_constraintRight_toRightOf="@id/dump_to_file" />
 
     <EditText
         android:id="@+id/required_dumping_rows"
         android:layout_width="234dp"
         android:layout_height="48dp"
+        android:layout_marginTop="28dp"
+        android:layout_marginRight="16dp"
         android:hint="@string/insert_required_rows"
         android:inputType="numberDecimal"
-        app:layout_constraintLeft_toLeftOf="@id/file_name"
-        app:layout_constraintTop_toTopOf="@id/how_many_rows" />
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/file_name" />
 
     <Button
         android:id="@+id/start_dumping_to_file"

@@ -96,22 +96,46 @@ public class MainActivity extends AppCompatActivity {
                 scanDisposable.dispose();
             }
             updateButtonUIState();
-            toggleScanBleButton.setEnabled(false);
-            dumpToFileButton.setEnabled(false);
 
             this.scanResultsCSV = new ArrayList<ScanResult>(0);
 
             int requiredRows = Integer.parseInt(String.valueOf(requiredDumpingRows.getText()));
             String filename = String.valueOf(filenameEditText.getText());
-//            Log.i("FILENAME", filename);
+
+            if (filename.length() < 2) {
+//                Toast.makeText(this, "Wprowadz nazwe pliku", Toast.LENGTH_SHORT).show();
+                throw new Exception("Wprowadz nazwe pliku...");
+            }
+
+            File pathfile = new File(this.getExternalFilesDir(null).getAbsolutePath() + "/csvData");
+
+            if (!pathfile.isDirectory()) {
+//              if no directory, create one
+                pathfile.mkdir();
+            }
+
+            File file = new File(pathfile,
+                    File.separator + filename + ".csv");
+            if (file.exists()) {
+                throw new IOException("Plik juz istnieje!");
+            }
+
+            toggleScanBleButton.setEnabled(false);
+            dumpToFileButton.setEnabled(false);
             scanBleDevicesDelay(requiredRows, filename);
         } catch (NumberFormatException nfe) {
             Toast.makeText(this, "Nalezy tam wpisac liczbe...", Toast.LENGTH_SHORT).show();
             toggleScanBleButton.setEnabled(true);
             dumpToFileButton.setEnabled(true);
-        } catch (Exception e) {
+        } catch(IOException ioException) {
             toggleScanBleButton.setEnabled(true);
             dumpToFileButton.setEnabled(true);
+            Toast.makeText(this, ioException.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+        catch (Exception e) {
+            toggleScanBleButton.setEnabled(true);
+            dumpToFileButton.setEnabled(true);
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -278,36 +302,27 @@ public class MainActivity extends AppCompatActivity {
 //                                        performAction(...);
 
                                         File pathfile = new File(this.getExternalFilesDir(null).getAbsolutePath() + "/csvData");
-//                                        directory.mkdirs();
-
-//                                        File pathfile = new File(Environment.getExternalStorageDirectory()
-//                                                .getAbsolutePath()
-//                                                + File.separator
-//                                                + "csvData");
-//                                        boolean directory = pathfile.isDirectory();
-//                                        if (!directory) {
-//                                            return;
-//                                        }
 
                                         if (!pathfile.isDirectory()) {
-//                                            ~~~~~~~~~~~~~~~~~~IS NOT CREATING A DIRECTORY~~~~~~~~~~~~~~~~~~
+//                                            if no directory, create one
                                             pathfile.mkdir();
                                         }
 
                                         File file = new File(pathfile,
                                                 File.separator + filename + ".csv");
                                         if (!file.exists()) {
-//                                            ~~~~~~~~~~~~~~~~~~IS NOT CREATING A FILE~~~~~~~~~~~~~~~~~~
-//                                            ~~~~~~~~~~~~~~~~~~HERE THROWS IOException ~~~~~~~~~~~~~~~~~~
+//                                            if file does not exist, create one
                                             file.createNewFile();
-//                                            Files.createFile(file.toPath());
                                             Log.i("File created: ", file.getName());
+                                        } else {
+                                            throw new IOException();
                                         }
                                         CSVWriter writer = new CSVWriter(new FileWriter(file));
 //                                        CSVWriter writer = new CSVWriter(new FileWriter(pathfile + File.separator + filename + ".csv"));
-
+                                        String[] columns = String.format("%s,%s,%s%s", "timestamp", "MAC", "Device name", "RSSI").split(",");
+                                        writer.writeNext(columns);
                                         scanResultsCSV.forEach(scan -> {
-                                            String[] entries = String.format("%s,%s,%s", scan.getTimestampNanos(), scan.getBleDevice(), scan.getRssi()).split(",");
+                                            String[] entries = String.format("%d,%s,%s,%d", scan.getTimestampNanos(), scan.getBleDevice().getMacAddress(), scan.getBleDevice().getName(), scan.getRssi()).split(",");
                                             Log.i("Entries", Arrays.toString(entries));
                                             writer.writeNext(entries);
                                         });
