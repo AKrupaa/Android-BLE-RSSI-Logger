@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.ble_rssi_plotter.Adapter.RecycleViewBLEAdapter;
@@ -58,6 +59,11 @@ public class MainActivity extends AppCompatActivity {
     // array for csv
     ArrayList<ScanResult> scanResultsCSV;
 
+    @BindView(R.id.file_directory_tv)
+    TextView fileDirectoryTextView;
+
+    @BindView(R.id.path_to_file_tv)
+    TextView pathToFileTextView;
 
     @BindView(R.id.ble_rv)
     RecyclerView recyclerView;
@@ -171,7 +177,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 //            onSaveInstanceState()
         if (savedInstanceState == null) {
 //            entering application for the first time
@@ -191,6 +196,11 @@ public class MainActivity extends AppCompatActivity {
 //        this is fun :-)
 //        for sake of practise
         unbinder = ButterKnife.bind(this);
+
+        File pathfile = new File(this.getExternalFilesDir(null).getAbsolutePath() + "/csvData");
+        fileDirectoryTextView.setText("File directory:");
+        pathToFileTextView.setText(pathfile.getPath());
+
 //        Turn on Bluetooth
         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         int REQUEST_ENABLE_BT = 1;
